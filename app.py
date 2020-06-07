@@ -66,5 +66,14 @@ def get_listings_by_reviews(words):
     return jsonify(res)
 
 
+@app.route('/get_neighbor_cluster_count')
+def get_neighbor_cluster_count():
+    qry = '''SELECT neighborhood, "0", "1", "2", "3", "4", "5", "6", "7", "8"
+ FROM dbo.neighborhood_cluster_counts'''
+    res = pd.read_sql(qry, con=engine)
+    res = res.to_dict('records')
+    return jsonify(res)
+
+
 if __name__ == '__main__':
     app.run()
