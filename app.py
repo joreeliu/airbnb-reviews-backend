@@ -5,6 +5,8 @@ import pandas as pd
 from flask import jsonify
 from flask_cors import CORS
 import config
+import geojson
+
 
 app = Flask(__name__)
 app.config.from_object(config.ProductionConfig())
@@ -25,6 +27,14 @@ def get_neighborhood():
             final_res[item['neighbourhood_group']].append(item['neighbourhood'])
 
     return jsonify(final_res)
+
+
+@app.route('/get_neighborhood_geo/')
+def get_neighborhood_geo():
+    with open('neighbourhoods.geojson') as f:
+        res = geojson.load(f)
+
+    return jsonify(res)
 
 
 @app.route('/get_listings_by_description/<words>')
