@@ -140,3 +140,5 @@ cython_debug/
 airbnb-reviews-backend/
 .idea
 .idea/*
+
+airbnb/
