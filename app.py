@@ -68,10 +68,13 @@ def get_listings_by_reviews(words):
 
 @app.route('/get_neighbor_cluster_count/<neighborhood>')
 def get_neighbor_cluster_count(neighborhood):
+    neighborhood = neighborhood.replace("'", "''")
     qry = f"""SELECT "0", "1", "2", "3", "4", "5", "6", "7", "8"
  FROM dbo.neighborhood_cluster_counts where neighborhood = '{neighborhood}'"""
     res = pd.read_sql(qry, con=engine)
+
     res = res.where(res.notnull(), None)
+    res = res / res.sum(axis=1).squeeze()
     res = res.to_dict('records')[0]
     final_res = []
     for key, val in res.items():
