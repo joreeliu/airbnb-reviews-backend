@@ -72,13 +72,22 @@ def get_neighbor_cluster_count(neighborhood):
     qry = f"""SELECT "0", "1", "2", "3", "4", "5", "6", "7", "8"
  FROM dbo.neighborhood_cluster_counts where neighborhood = '{neighborhood}'"""
     res = pd.read_sql(qry, con=engine)
+    res.columns = ['surrounded by good food',
+                   'worth exploration',
+                   'you can walk to best parks',
+                   'safe and quiet',
+                   'walk to a train station',
+                   'visit iconic architectures',
+                   'life is convenient',
+                   'arts and doodles',
+                   'enjoy a cup of coffee']
 
     res = res.where(res.notnull(), None)
     res = res / res.sum(axis=1).squeeze()
     res = res.to_dict('records')[0]
     final_res = []
     for key, val in res.items():
-        final_res.append({'key': int(key), 'val': val})
+        final_res.append({'key': key, 'val': val})
     return jsonify(final_res)
 
 
