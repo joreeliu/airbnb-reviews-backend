@@ -87,7 +87,8 @@ def get_neighbor_cluster_count(neighborhood):
     res = res.to_dict('records')[0]
     final_res = []
     for key, val in res.items():
-        final_res.append({'key': key, 'val': val})
+        if val != 0:
+            final_res.append({'key': key, 'val': val})
     return jsonify(final_res)
 
 
