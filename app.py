@@ -49,6 +49,7 @@ def get_listings_by_description(words):
 
 @app.route('/get_listings_by_neighborhood/<neighborhood>')
 def get_listings_by_neighborhood(neighborhood):
+    neighborhood = neighborhood.replace("'", "''")
     qry = f"""select * from dbo.listings where neighbourhood like '%%{neighborhood}%%'"""
     res = pd.read_sql(qry, con=engine)
     res = res.where(res.notnull(), None)
