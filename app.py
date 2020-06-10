@@ -6,6 +6,7 @@ from flask import jsonify
 from flask_cors import CORS
 import config
 import geojson
+import yaml
 
 
 app = Flask(__name__)
@@ -67,21 +68,27 @@ def get_listings_by_reviews(words):
     return jsonify(res)
 
 
+@app.route('/get_group_mapping')
+def get_group_mapping():
+    return {'0': 'surrounded by good food',
+            '1':  'worth exploration',
+            '2': 'you can walk to best parks',
+            '3': 'safe and quiet',
+            '4': 'walk to a train station',
+            '5': 'visit iconic architectures',
+            '6': 'life is convenient',
+            '7': 'arts and doodles',
+            '8': 'enjoy a cup of coffee'}
+
+
 @app.route('/get_neighbor_cluster_count/<neighborhood>')
 def get_neighbor_cluster_count(neighborhood):
     neighborhood = neighborhood.replace("'", "''")
     qry = f"""SELECT "0", "1", "2", "3", "4", "5", "6", "7", "8"
  FROM dbo.neighborhood_cluster_counts where neighborhood = '{neighborhood}'"""
     res = pd.read_sql(qry, con=engine)
-    res.columns = ['surrounded by good food',
-                   'worth exploration',
-                   'you can walk to best parks',
-                   'safe and quiet',
-                   'walk to a train station',
-                   'visit iconic architectures',
-                   'life is convenient',
-                   'arts and doodles',
-                   'enjoy a cup of coffee']
+
+    res = res.rename(columns=get_group_mapping())
 
     res = res.where(res.notnull(), None)
     res = res / res.sum(axis=1).squeeze()
@@ -91,6 +98,32 @@ def get_neighbor_cluster_count(neighborhood):
         if val != 0:
             final_res.append({'key': key, 'val': val})
     return jsonify(final_res)
+
+
+@app.route('/get_neighbor_intro/<neighborhood>')
+def get_neighbor_intro(neighborhood):
+    df = pd.read_csv('neighborhoodsintro.csv')
+    df.loc[:, 'img'] = 'https://images.nycgo.com/image/fetch/q_65,c_fill,f_auto,w_1920/https://www.nycgo.com/images/neighborhoods/71290/dumbo-brooklyn-nyc-julienne-schaer-nyc-and-company-207.jpg'
+    df_tmp = df[df['neighborhood_name'] == neighborhood]
+    if df_tmp.empty:
+        return
+    target = df_tmp.to_dict('record')[0]
+    return jsonify(target)
+
+
+@app.route('/get_keywords/<group>')
+def get_keywords(group):
+
+    dct = get_group_mapping()
+    inv_dct = {v: k for k, v in dct.items()}
+    group_code = inv_dct[group]
+
+    with open("cluster_description.yaml", 'r') as stream:
+        try:
+            return jsonify(yaml.safe_load(stream).get(f'Cluster {group_code}', []))
+        except yaml.YAMLError as exc:
+            print(exc)
+            return None
 
 
 if __name__ == '__main__':

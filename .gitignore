@@ -142,3 +142,5 @@ airbnb-reviews-backend/
 .idea/*
 
 airbnb/
+
+.DS_store
