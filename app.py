@@ -70,15 +70,15 @@ def get_listings_by_reviews(words):
 
 @app.route('/get_group_mapping')
 def get_group_mapping():
-    return {'0': 'surrounded by good food',
-            '1':  'worth exploration',
-            '2': 'you can walk to best parks',
-            '3': 'safe and quiet',
-            '4': 'walk to a train station',
-            '5': 'visit iconic architectures',
-            '6': 'life is convenient',
-            '7': 'arts and doodles',
-            '8': 'enjoy a cup of coffee'}
+    return {'0': 'Foodies',
+            '1': 'Wanderers',
+            '2': 'Park Lovers',
+            '3': 'Quiet Seekers',
+            '4': 'Subway Riders',
+            '5': 'Architecture Lovers',
+            '6': 'Everything Bagel',
+            '7': 'Artists',
+            '8': 'Café-goers'}
 
 
 @app.route('/get_neighbor_cluster_count/<neighborhood>')
