@@ -1,20 +1,16 @@
 from flask import Flask
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
+import config
 import pandas as pd
 from flask import jsonify
-from flask_cors import CORS
-import config
 import geojson
 import yaml
 
 
-app = Flask(__name__)
-app.config.from_object(config.ProductionConfig())
-CORS(app)
-engine = create_engine(URL(**app.config['DATABASE']))
+#https://us-east-2.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-2#/application/overview?applicationName=flask-test
 
-
+# print a nice greeting.
 def say_hello(username = "World"):
     return '<p>Hello %s!</p>\n' % username
 
@@ -29,19 +25,21 @@ home_link = '<p><a href="/">Back</a></p>\n'
 footer_text = '</body>\n</html>'
 
 # EB looks for an 'application' callable by default.
-app = Flask(__name__)
+application = Flask(__name__)
+application.config.from_object(config.ProductionConfig())
+engine = create_engine(URL(**application.config['DATABASE']))
 
 # add a rule for the index page.
-app.add_url_rule('/', 'index', (lambda: header_text +
+application.add_url_rule('/', 'index', (lambda: header_text +
     say_hello() + instructions + footer_text))
 
 # add a rule when the page is accessed with a name appended to the site
 # URL.
-app.add_url_rule('/<username>', 'hello', (lambda username:
+application.add_url_rule('/<username>', 'hello', (lambda username:
     header_text + say_hello(username) + home_link + footer_text))
 
 
-@app.route('/get_neighborhood/')
+@application.route('/get_neighborhood/')
 def get_neighborhood():
     qry = """select * from dbo.neighbourhoods"""
     res = pd.read_sql(qry, con=engine)
@@ -57,7 +55,7 @@ def get_neighborhood():
     return jsonify(final_res)
 
 
-@app.route('/get_neighborhood_geo/')
+@application.route('/get_neighborhood_geo/')
 def get_neighborhood_geo():
     with open('neighbourhoods.geojson') as f:
         res = geojson.load(f)
@@ -65,7 +63,7 @@ def get_neighborhood_geo():
     return jsonify(res)
 
 
-@app.route('/get_listings_by_description/<words>')
+@application.route('/get_listings_by_description/<words>')
 def get_listings_by_description(words):
     qry = f"""select * from dbo.listings where description like '%%{words}%%' limit 100"""
     res = pd.read_sql(qry, con=engine)
@@ -75,7 +73,7 @@ def get_listings_by_description(words):
     return jsonify(res)
 
 
-@app.route('/get_listings_by_neighborhood/<neighborhood>')
+@application.route('/get_listings_by_neighborhood/<neighborhood>')
 def get_listings_by_neighborhood(neighborhood):
     neighborhood = neighborhood.replace("'", "''")
     qry = f"""select * from dbo.listings where neighbourhood like '%%{neighborhood}%%'"""
@@ -85,17 +83,7 @@ def get_listings_by_neighborhood(neighborhood):
     return jsonify(res)
 
 
-@app.route('/get_listings_by_reviews/<words>')
-def get_listings_by_reviews(words):
-    qry = f"""select distinct L.id, name, summary, space, description, neighborhood_overview, transit, access, neighbourhood, neighbourhood_cleansed, zipcode, market, latitude, longitude, room_type, property_type, number_of_reviews, review_scores_rating, review_scores_location from dbo.listings as L inner join dbo.reviews as R on L.id = R.listing_id where R.comments like 
- '%%{words}%%'"""
-    res = pd.read_sql(qry, con=engine)
-    res = res.where(res.notnull(), None)
-    res = res.to_dict('records')
-    return jsonify(res)
-
-
-@app.route('/get_group_mapping')
+@application.route('/get_group_mapping')
 def get_group_mapping():
     return {'0': 'Foodies',
             '1': 'Wanderers',
@@ -108,7 +96,7 @@ def get_group_mapping():
             '8': 'Café-goers'}
 
 
-@app.route('/get_neighbor_cluster_count/<neighborhood>')
+@application.route('/get_neighbor_cluster_count/<neighborhood>')
 def get_neighbor_cluster_count(neighborhood):
     neighborhood = neighborhood.replace("'", "''")
     qry = f"""SELECT "0", "1", "2", "3", "4", "5", "6", "7", "8"
@@ -127,7 +115,7 @@ def get_neighbor_cluster_count(neighborhood):
     return jsonify(final_res)
 
 
-@app.route('/get_top_clusters_groups/<group>')
+@application.route('/get_top_clusters_groups/<group>')
 def get_top_clusters_groups(group):
     dct = get_group_mapping()
     inv_dct = {v: k for k, v in dct.items()}
@@ -146,7 +134,7 @@ def get_top_clusters_groups(group):
     return jsonify(list(res))
 
 
-@app.route('/get_neighbor_intro/<neighborhood>')
+@application.route('/get_neighbor_intro/<neighborhood>')
 def get_neighbor_intro(neighborhood):
     qry = """select * from dbo.neighborhoodsintro"""
     df = pd.read_sql(qry, con=engine)
@@ -158,7 +146,7 @@ def get_neighbor_intro(neighborhood):
     return jsonify(target)
 
 
-@app.route('/get_keywords/<group>')
+@application.route('/get_keywords/<group>')
 def get_keywords(group):
 
     dct = get_group_mapping()
@@ -172,8 +160,7 @@ def get_keywords(group):
             print(exc)
             return None
 
-
-@app.route('/get_neighborhood_score/<neighborhood>')
+@application.route('/get_neighborhood_score/<neighborhood>')
 def get_neighborhood_score(neighborhood):
     qry = f"""SELECT neighbourhood_cleansed neighborhood, avg(review_scores_rating) score FROM dbo.listings group by neighbourhood_cleansed having neighbourhood_cleansed = '{neighborhood}';"""
     df = pd.read_sql(qry, con=engine)
@@ -183,6 +170,9 @@ def get_neighborhood_score(neighborhood):
     return jsonify(df.to_dict('record')[0])
 
 
-if __name__ == '__main__':
-    app.debug = True
-    app.run(host="0.0.0.0")
+# run the app.
+if __name__ == "__main__":
+    # Setting debug to True enables debug output. This line should be
+    # removed before deploying a production app.
+    application.debug = True
+    application.run()
