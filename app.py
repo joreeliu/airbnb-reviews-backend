@@ -17,7 +17,8 @@ engine = create_engine(URL(**app.config['DATABASE']))
 
 @app.route('/get_neighborhood/')
 def get_neighborhood():
-    res = pd.read_csv("neighbourhoods.csv")
+    qry = """select * from dbo.neighbourhoods"""
+    res = pd.read_sql(qry, con=engine)
     res = res.where(res.notnull(), None)
     res = res.to_dict('records')
     final_res = dict()
@@ -121,8 +122,8 @@ def get_top_clusters_groups(group):
 
 @app.route('/get_neighbor_intro/<neighborhood>')
 def get_neighbor_intro(neighborhood):
-    df = pd.read_csv('neighborhoodsintro.csv')
-    df.loc[:, 'img'] = 'https://images.nycgo.com/image/fetch/q_65,c_fill,f_auto,w_1920/https://www.nycgo.com/images/neighborhoods/71290/dumbo-brooklyn-nyc-julienne-schaer-nyc-and-company-207.jpg'
+    qry = """select * from dbo.neighborhoodsintro"""
+    df = pd.read_sql(qry, con=engine)
     df_tmp = df[df['neighborhood_name'] == neighborhood]
     if df_tmp.empty:
         target = dict(img='', neighborhood_borough='', neighborhood_description='', neighborhood_name=neighborhood, neighborhood_url='')
