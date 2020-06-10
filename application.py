@@ -6,6 +6,7 @@ import pandas as pd
 from flask import jsonify
 import geojson
 import yaml
+from flask_cors import CORS
 
 
 #https://us-east-2.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-2#/application/overview?applicationName=flask-test
@@ -27,6 +28,7 @@ footer_text = '</body>\n</html>'
 # EB looks for an 'application' callable by default.
 application = Flask(__name__)
 application.config.from_object(config.ProductionConfig())
+CORS(application)
 engine = create_engine(URL(**application.config['DATABASE']))
 
 # add a rule for the index page.
