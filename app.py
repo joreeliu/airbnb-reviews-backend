@@ -125,8 +125,9 @@ def get_neighbor_intro(neighborhood):
     df.loc[:, 'img'] = 'https://images.nycgo.com/image/fetch/q_65,c_fill,f_auto,w_1920/https://www.nycgo.com/images/neighborhoods/71290/dumbo-brooklyn-nyc-julienne-schaer-nyc-and-company-207.jpg'
     df_tmp = df[df['neighborhood_name'] == neighborhood]
     if df_tmp.empty:
-        return
-    target = df_tmp.to_dict('record')[0]
+        target = dict(img='', neighborhood_borough='', neighborhood_description='', neighborhood_name=neighborhood, neighborhood_url='')
+    else:
+        target = df_tmp.to_dict('record')[0]
     return jsonify(target)
 
 
