@@ -145,5 +145,15 @@ def get_keywords(group):
             return None
 
 
+@app.route('/get_neighborhood_score/<neighborhood>')
+def get_neighborhood_score(neighborhood):
+    qry = f"""SELECT neighbourhood_cleansed neighborhood, avg(review_scores_rating) score FROM dbo.listings group by neighbourhood_cleansed having neighbourhood_cleansed = '{neighborhood}';"""
+    df = pd.read_sql(qry, con=engine)
+
+    if df.empty:
+        return None
+    return jsonify(df.to_dict('record')[0])
+
+
 if __name__ == '__main__':
     app.run()
