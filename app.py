@@ -100,6 +100,25 @@ def get_neighbor_cluster_count(neighborhood):
     return jsonify(final_res)
 
 
+@app.route('/get_top_clusters_groups/<group>')
+def get_top_clusters_groups(group):
+    dct = get_group_mapping()
+    inv_dct = {v: k for k, v in dct.items()}
+    group_code = inv_dct[group]
+
+    qry = f"""SELECT neighborhood, "0", "1", "2", "3", "4", "5", "6", "7", "8"
+    FROM dbo.neighborhood_cluster_counts"""
+    res = pd.read_sql(qry, con=engine)
+    res.set_index('neighborhood', inplace=True)
+    res.loc[:, 'category'] = res.idxmax(1)
+    res = res[res['category'] == str(group_code)]
+    if res.empty:
+        res = []
+    else:
+        res = res.sort_values(by=str(group_code), ascending=False).head(5).reset_index()['neighborhood']
+    return jsonify(list(res))
+
+
 @app.route('/get_neighbor_intro/<neighborhood>')
 def get_neighbor_intro(neighborhood):
     df = pd.read_csv('neighborhoodsintro.csv')
